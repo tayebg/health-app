@@ -73,7 +73,7 @@ src/
 
 1. **Clone the repository**
    ```bash
-   git clone <tayebg/health-app>
+   git clone <github.com/tayebg/health-app>
    cd e-health-app
    ```
 
