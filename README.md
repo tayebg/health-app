@@ -55,11 +55,11 @@ src/
 ```
 ## 📸 Screenshots
 
-   ![Screenshots 1](screenshots/1.png)
-   ![Screenshots 2](screenshots/2.png)
-   ![Screenshots 3](screenshots/3.png)
-   ![Screenshots 4](screenshots/4.png)
-   ![Screenshots 5](screenshots/5.png)
+   ![Screenshots 1](Screenshots/1.png)
+   ![Screenshots 2](Screenshots/2.png)
+   ![Screenshots 3](Screenshots/3.png)
+   ![Screenshots 4](Screenshots/4.png)
+   ![Screenshots 5](Screenshots/5.png)
 
 ## 🚀 Getting Started
 
