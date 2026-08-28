@@ -1,0 +1,8 @@
+bin/
+*.class
+.settings/
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+project_djebril/
