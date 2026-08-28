@@ -76,9 +76,10 @@ public class temperature extends JFrame {
         }
 
         try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT week, day, Temp FROM status WHERE ID_patient=" + globaldata.id_pa)) {
-            while (rs.next()) {
+             PreparedStatement pstmt = conn.prepareStatement("SELECT week, day, Temp FROM status WHERE ID_patient = ?")) {
+            pstmt.setInt(1, globaldata.id_pa);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
                 int w = rs.getInt("week");
                 int d = rs.getInt("day");
                 int val = rs.getInt("Temp");
@@ -86,10 +87,11 @@ public class temperature extends JFrame {
                     data[w - 1][d - 1] = val;
                 }
             }
-        } catch (Exception ignored) {}
+        }
+    } catch (Exception ignored) {}
 
-        return data;
-    }
+    return data;
+}
 
     private JButton createImageButton(String imagePath, int width, int height) {
         JButton button = new JButton();

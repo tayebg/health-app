@@ -87,60 +87,34 @@ public class patTable extends JFrame {
     private void loadPatientsFromDatabase() {
         List<Patient> patients = new ArrayList<>();
         
-        // Database connection variables
-        Connection c = null;
-        Statement stmt = null;
-        ResultSet rs = null;
+        try (Connection c = DBConnection.getConnection()) {
+            String sql = (loggedInDoctorId > 0) ? "SELECT * FROM patient WHERE ID_med = ?" : "SELECT * FROM patient";
+            try (PreparedStatement pstmt = c.prepareStatement(sql)) {
+                if (loggedInDoctorId > 0) {
+                    pstmt.setInt(1, loggedInDoctorId);
+                }
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        int patientId = rs.getInt("ID_patient");
+                        String username = rs.getString("User_pat");
+                        String fullName = rs.getString("Name_pat");
+                        String gender = rs.getString("Gender_pat");
+                        String email = rs.getString("Email_pat");
+                        String phone = rs.getString("phone_pat");
 
-        try {
-            // Load MySQL JDBC driver
-            Class.forName("com.mysql.cj.jdbc.Driver");
-
-            // Establish connection to the database
-            c = DriverManager.getConnection("jdbc:mysql://localhost:3306/tabib", "Tabib", "abc123");
-
-            // Create a statement object
-            stmt = c.createStatement();
-
-            // SQL query to get patients assigned to the logged-in doctor
-            String sql = "SELECT * FROM patient WHERE ID_med = " + loggedInDoctorId;
-
-            // Execute the query
-            rs = stmt.executeQuery(sql);
-
-            // Process the result set
-            while (rs.next()) {
-                // Get patient information from the database
-                int patientId = rs.getInt("ID_patient");
-                String username = rs.getString("User_pat");
-                String fullName = rs.getString("User_pat");
-                String gender = rs.getString("Gender_pat");
-                String email = rs.getString("Email_pat");
-                String phone = rs.getString("phone_pat");
-
-                // Create a Patient object and add it to the list
-                Patient patient = new Patient(patientId, username, fullName, gender, email, phone);
-                patients.add(patient);
+                        Patient patient = new Patient(patientId, username, fullName, gender, email, phone);
+                        patients.add(patient);
+                    }
+                }
             }
 
-            // Add patients to the table
             for (Patient patient : patients) {
                 Object[] row = {autoIncrementId++, patient.getUsername(), patient.getFullName(), patient.getGender(), patient.getEmail(), patient.getPhone()};
                 tableModel.addRow(row);
             }
 
         } catch (Exception ex) {
-            ex.printStackTrace();
             JOptionPane.showMessageDialog(null, "Database error: " + ex.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                // Close resources
-                if (rs != null) rs.close();
-                if (stmt != null) stmt.close();
-                if (c != null) c.close();
-            } catch (SQLException se) {
-                se.printStackTrace();
-            }
         }
     }
 

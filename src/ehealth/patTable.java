@@ -141,41 +141,37 @@ public class patTable extends JFrame {
         patientList.clear();
 
         boolean loadedFromDb = false;
-        try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
+        try (Connection conn = DBConnection.getConnection()) {
 
-            String sql;
             if (loggedInDoctorId > 0) {
-                sql = "SELECT * FROM patient WHERE ID_med = " + loggedInDoctorId;
-            } else {
-                sql = "SELECT * FROM patient";
-            }
+                String sql = "SELECT * FROM patient WHERE ID_med = ?";
+                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                    pstmt.setInt(1, loggedInDoctorId);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        while (rs.next()) {
+                            int id = rs.getInt("ID_patient");
+                            String username = rs.getString("User_pat");
+                            String fullName = rs.getString("Name_pat");
+                            String gender = rs.getString("Gender_pat");
+                            String email = rs.getString("Email_pat");
+                            String phone = rs.getString("phone_pat");
 
-            try (ResultSet rs = stmt.executeQuery(sql)) {
-                while (rs.next()) {
-                    int id = rs.getInt("ID_patient");
-                    String username = rs.getString("User_pat");
-                    String fullName = rs.getString("Name_pat");
-                    String gender = rs.getString("Gender_pat");
-                    String email = rs.getString("Email_pat");
-                    String phone = rs.getString("phone_pat");
-
-                    tableModel.addRow(new Object[]{id, username, fullName, gender, email, phone});
-                    patientList.add(new PatientInfo(id, username, fullName, gender, email, phone));
-                    loadedFromDb = true;
+                            tableModel.addRow(new Object[]{id, username, fullName, gender, email, phone});
+                            patientList.add(new PatientInfo(id, username, fullName, gender, email, phone));
+                            loadedFromDb = true;
+                        }
+                    }
                 }
-            }
-
-            if (!loadedFromDb) {
-                // If query returned 0 rows for this doctor, load all patients
-                try (ResultSet rsAll = stmt.executeQuery("SELECT * FROM patient")) {
-                    while (rsAll.next()) {
-                        int id = rsAll.getInt("ID_patient");
-                        String username = rsAll.getString("User_pat");
-                        String fullName = rsAll.getString("Name_pat");
-                        String gender = rsAll.getString("Gender_pat");
-                        String email = rsAll.getString("Email_pat");
-                        String phone = rsAll.getString("phone_pat");
+            } else {
+                try (PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM patient");
+                     ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        int id = rs.getInt("ID_patient");
+                        String username = rs.getString("User_pat");
+                        String fullName = rs.getString("Name_pat");
+                        String gender = rs.getString("Gender_pat");
+                        String email = rs.getString("Email_pat");
+                        String phone = rs.getString("phone_pat");
 
                         tableModel.addRow(new Object[]{id, username, fullName, gender, email, phone});
                         patientList.add(new PatientInfo(id, username, fullName, gender, email, phone));

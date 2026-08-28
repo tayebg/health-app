@@ -258,74 +258,92 @@ class Login extends JFrame {
 
         boolean dbSuccess = false;
 
-        try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
+        try (Connection conn = DBConnection.getConnection()) {
 
             // 1. Check patient table
-            String sqlPatient = "SELECT * FROM patient WHERE (Email_pat='" + email + "' OR User_pat='" + email + "') AND Pass_pat='" + password + "'";
-            try (ResultSet rs = stmt.executeQuery(sqlPatient)) {
-                if (rs.next()) {
-                    globaldata.id_pa = rs.getInt("ID_patient");
-                    globaldata.currentUserName = rs.getString("Name_pat");
-                    globaldata.currentUserRole = "patient";
-                    dbSuccess = true;
-                    dispose();
-                    new form().setVisible(true);
-                    return;
+            String sqlPatient = "SELECT * FROM patient WHERE (Email_pat = ? OR User_pat = ?) AND Pass_pat = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sqlPatient)) {
+                pstmt.setString(1, email);
+                pstmt.setString(2, email);
+                pstmt.setString(3, password);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        globaldata.id_pa = rs.getInt("ID_patient");
+                        globaldata.currentUserName = rs.getString("Name_pat");
+                        globaldata.currentUserRole = "patient";
+                        dbSuccess = true;
+                        dispose();
+                        new form().setVisible(true);
+                        return;
+                    }
                 }
             }
 
             // 2. Check doctor/med table
-            String sqlMedic = "SELECT * FROM med WHERE (email_med='" + email + "' OR user_med='" + email + "') AND pass_med='" + password + "'";
-            try (ResultSet rs = stmt.executeQuery(sqlMedic)) {
-                if (rs.next()) {
-                    globaldata.id_med = rs.getInt("ID_med");
-                    globaldata.currentUserName = rs.getString("name_med");
-                    globaldata.currentUserRole = "medcine";
-                    dbSuccess = true;
-                    dispose();
-                    new patTable(globaldata.id_med).setVisible(true);
-                    return;
+            String sqlMedic = "SELECT * FROM med WHERE (email_med = ? OR user_med = ?) AND pass_med = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sqlMedic)) {
+                pstmt.setString(1, email);
+                pstmt.setString(2, email);
+                pstmt.setString(3, password);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        globaldata.id_med = rs.getInt("ID_med");
+                        globaldata.currentUserName = rs.getString("name_med");
+                        globaldata.currentUserRole = "medcine";
+                        dbSuccess = true;
+                        dispose();
+                        new patTable(globaldata.id_med).setVisible(true);
+                        return;
+                    }
                 }
             }
 
             // 3. Check admin table
-            String sqlAdmin = "SELECT * FROM admin WHERE user_admin='" + email + "' AND pass_admin='" + password + "'";
-            try (ResultSet rs = stmt.executeQuery(sqlAdmin)) {
-                if (rs.next()) {
-                    globaldata.id_admin = rs.getInt("id_admin");
-                    globaldata.currentUserName = "Admin";
-                    globaldata.currentUserRole = "admin";
-                    dbSuccess = true;
-                    dispose();
-                    new tableuser().setVisible(true);
-                    return;
+            String sqlAdmin = "SELECT * FROM admin WHERE user_admin = ? AND pass_admin = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sqlAdmin)) {
+                pstmt.setString(1, email);
+                pstmt.setString(2, password);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        globaldata.id_admin = rs.getInt("id_admin");
+                        globaldata.currentUserName = "Admin";
+                        globaldata.currentUserRole = "admin";
+                        dbSuccess = true;
+                        dispose();
+                        new tableuser().setVisible(true);
+                        return;
+                    }
                 }
             }
 
             // 4. Check unified user table (ehealth schema)
             try {
-                String sqlUser = "SELECT * FROM user WHERE (email='" + email + "' OR full_name='" + email + "') AND password='" + password + "'";
-                try (ResultSet rs = stmt.executeQuery(sqlUser)) {
-                    if (rs.next()) {
-                        String role = rs.getString("role");
-                        int id = rs.getInt("id");
-                        globaldata.currentUserName = rs.getString("full_name");
-                        dbSuccess = true;
-                        dispose();
-                        if ("admin".equalsIgnoreCase(role)) {
-                            globaldata.currentUserRole = "admin";
-                            new tableuser().setVisible(true);
-                        } else if ("medcine".equalsIgnoreCase(role)) {
-                            globaldata.currentUserRole = "medcine";
-                            globaldata.id_med = id;
-                            new patTable(id).setVisible(true);
-                        } else {
-                            globaldata.currentUserRole = "patient";
-                            globaldata.id_pa = id;
-                            new form().setVisible(true);
+                String sqlUser = "SELECT * FROM \"user\" WHERE (email = ? OR full_name = ?) AND password = ?";
+                try (PreparedStatement pstmt = conn.prepareStatement(sqlUser)) {
+                    pstmt.setString(1, email);
+                    pstmt.setString(2, email);
+                    pstmt.setString(3, password);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) {
+                            String role = rs.getString("role");
+                            int id = rs.getInt("id");
+                            globaldata.currentUserName = rs.getString("full_name");
+                            dbSuccess = true;
+                            dispose();
+                            if ("admin".equalsIgnoreCase(role)) {
+                                globaldata.currentUserRole = "admin";
+                                new tableuser().setVisible(true);
+                            } else if ("medcine".equalsIgnoreCase(role)) {
+                                globaldata.currentUserRole = "medcine";
+                                globaldata.id_med = id;
+                                new patTable(id).setVisible(true);
+                            } else {
+                                globaldata.currentUserRole = "patient";
+                                globaldata.id_pa = id;
+                                new form().setVisible(true);
+                            }
+                            return;
                         }
-                        return;
                     }
                 }
             } catch (SQLException ignored) {}

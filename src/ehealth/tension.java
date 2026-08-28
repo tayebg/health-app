@@ -76,14 +76,16 @@ public class tension extends JFrame {
         }
 
         try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT week, day, Tension FROM status WHERE ID_patient=" + globaldata.id_pa)) {
-            while (rs.next()) {
-                int w = rs.getInt("week");
-                int d = rs.getInt("day");
-                int val = rs.getInt("Tension");
-                if (w >= 1 && w <= 4 && d >= 1 && d <= 7) {
-                    data[w - 1][d - 1] = val;
+             PreparedStatement pstmt = conn.prepareStatement("SELECT week, day, Tension FROM status WHERE ID_patient = ?")) {
+            pstmt.setInt(1, globaldata.id_pa);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    int w = rs.getInt("week");
+                    int d = rs.getInt("day");
+                    int val = rs.getInt("Tension");
+                    if (w >= 1 && w <= 4 && d >= 1 && d <= 7) {
+                        data[w - 1][d - 1] = val;
+                    }
                 }
             }
         } catch (Exception ignored) {}

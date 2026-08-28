@@ -1,0 +1,18 @@
+# ========================================================
+# Database Configuration Template (PostgreSQL / MySQL)
+# ========================================================
+# Copy this file to db.properties and set your local credentials.
+
+# Database Type: postgresql or mysql
+db.type=postgresql
+
+# Host and Port
+db.host=localhost
+db.port=5432
+
+# Database Name (default: postgres, tabib, or ehealth)
+db.name=postgres
+
+# Database User and Password
+db.user=postgres
+db.password=postgres

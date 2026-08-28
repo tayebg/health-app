@@ -148,81 +148,60 @@ public class login extends JFrame {
                 String email = txtEmail.getText();
                 String password = new String(passwordField.getPassword());
 
-                // Database connection
-                Connection c = null;
-                java.sql.Statement stmt = null;
-                ResultSet rs = null;
-
-                try {
-                    // Load MySQL JDBC driver
-                    Class.forName("com.mysql.cj.jdbc.Driver");
-
-                    // Establish connection to the database
-                    c = DriverManager.getConnection("jdbc:mysql://localhost:3306/tabib", "Tabib", "abc123");
-
-                    // Create a statement object
-                    stmt = c.createStatement();
-
-                    // SQL query to authenticate the user in the patient table
-                    String sqlPatient = "SELECT * FROM patient WHERE Email_pat='" + email + "' AND Pass_pat='" + password + "'";
-                    rs = stmt.executeQuery(sqlPatient);
-
-                    // Check if the query returned any results for the patient
-                    if (rs.next()) {
-                        // Retrieve the patient ID from the result set
-                        GlobalData.id_pa = rs.getInt("ID_patient");
-                        // Open the patient form if login is successful
-                        Form form = new Form(GlobalData.id_pa); // Pass the ID to the Form
-                        form.setVisible(true);
-                        dispose(); // Dispose of the current window
-                    } else {
-                        // If no patient found, check the medic table
-                        String sqlMedic = "SELECT * FROM med WHERE email_med='" + email + "' AND pass_med='" + password + "'";
-                        rs = stmt.executeQuery(sqlMedic);
-
-                        // Check if the query returned any results for the medic
-                        if (rs.next()) {
-                            // Retrieve the medic ID (or any other necessary data)
-                            GlobalData.id_med = rs.getInt("ID_med");
-                            // Open the patient table if login is successful for medic
-                            patTable patientTable = new patTable(GlobalData.id_med); // Pass the medic ID to the PatientTable
-                            patientTable.setVisible(true);
-                            dispose(); // Dispose of the current window
-                        } else {
-                            // If no patient and no medic found, check the admin table
-                            String sqlAdmin = "SELECT * FROM admin WHERE user_admin='" + email + "' AND pass_admin='" + password + "'";
-                            rs = stmt.executeQuery(sqlAdmin);
-
-                            // Check if the query returned any results for the admin
+                try (Connection c = DBConnection.getConnection()) {
+                    // Check patient table
+                    String sqlPatient = "SELECT * FROM patient WHERE (Email_pat = ? OR User_pat = ?) AND Pass_pat = ?";
+                    try (PreparedStatement pstmt = c.prepareStatement(sqlPatient)) {
+                        pstmt.setString(1, email);
+                        pstmt.setString(2, email);
+                        pstmt.setString(3, password);
+                        try (ResultSet rs = pstmt.executeQuery()) {
                             if (rs.next()) {
-                                // Open the doctor table if login is successful for admin
-                                tabibTabel doctorTable = new tabibTabel(); // Open the doctor table for admin
-                                doctorTable.setVisible(true);
-                                dispose(); // Dispose of the current window
-                            } else {
-                                // Show error message if login fails for patient, medic, and admin
-                                JOptionPane.showMessageDialog(null, "User/pass error", "ERROR", JOptionPane.ERROR_MESSAGE);
+                                GlobalData.id_pa = rs.getInt("ID_patient");
+                                Form form = new Form(GlobalData.id_pa);
+                                form.setVisible(true);
+                                dispose();
+                                return;
                             }
                         }
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(null, "Database error: " + ex.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
-                } finally {
-                    try {
-                        // Close resources in finally block to ensure they are always closed
-                        if (rs != null) {
-                            rs.close();
+
+                    // Check medic table
+                    String sqlMedic = "SELECT * FROM med WHERE (email_med = ? OR user_med = ?) AND pass_med = ?";
+                    try (PreparedStatement pstmt = c.prepareStatement(sqlMedic)) {
+                        pstmt.setString(1, email);
+                        pstmt.setString(2, email);
+                        pstmt.setString(3, password);
+                        try (ResultSet rs = pstmt.executeQuery()) {
+                            if (rs.next()) {
+                                GlobalData.id_med = rs.getInt("ID_med");
+                                patTable patientTable = new patTable(GlobalData.id_med);
+                                patientTable.setVisible(true);
+                                dispose();
+                                return;
+                            }
                         }
-                        if (stmt != null) {
-                            stmt.close();
-                        }
-                        if (c != null) {
-                            c.close();
-                        }
-                    } catch (SQLException se) {
-                        se.printStackTrace();
                     }
+
+                    // Check admin table
+                    String sqlAdmin = "SELECT * FROM admin WHERE user_admin = ? AND pass_admin = ?";
+                    try (PreparedStatement pstmt = c.prepareStatement(sqlAdmin)) {
+                        pstmt.setString(1, email);
+                        pstmt.setString(2, password);
+                        try (ResultSet rs = pstmt.executeQuery()) {
+                            if (rs.next()) {
+                                tabibTabel doctorTable = new tabibTabel();
+                                doctorTable.setVisible(true);
+                                dispose();
+                                return;
+                            }
+                        }
+                    }
+
+                    JOptionPane.showMessageDialog(null, "Invalid username or password.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null, "Database error: " + ex.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });

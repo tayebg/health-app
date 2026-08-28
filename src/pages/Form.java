@@ -173,28 +173,23 @@ public class Form extends JFrame {
      * Saves the data from the form to the database.
      */
     private void saveDataToDatabase() {
-        String url = "jdbc:mysql://localhost:3306/tabib";
-        String user = "Tabib";
-        String password = "abc123";
+        try (Connection conn = DBConnection.getConnection()) {
+            String query = "INSERT INTO status (Temp, Weight, Tension, day, week, ID_patient) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, Integer.parseInt(TempT.getText().trim()));
+                stmt.setInt(2, Integer.parseInt(weightT.getText().trim()));
+                stmt.setInt(3, Integer.parseInt(tenT.getText().trim()));
+                stmt.setInt(4, Integer.parseInt(DayT.getText().trim()));
+                stmt.setInt(5, Integer.parseInt(WeekT.getText().trim()));
+                stmt.setInt(6, GlobalData.id_pa);
 
-        try (Connection conn = DriverManager.getConnection(url, user, password)) {
-            String query = "INSERT INTO status ( Temp, Weight, Tension, day, week, ID_patient) VALUES ( ?, ?, ?, ?, ?, ?)";
-            PreparedStatement stmt = conn.prepareStatement(query);
-            
-            stmt.setInt(1, Integer.parseInt(TempT.getText()));
-            stmt.setInt(2, Integer.parseInt(weightT.getText()));
-            stmt.setInt(3, Integer.parseInt(tenT.getText()));
-            stmt.setInt(4, Integer.parseInt(DayT.getText()));
-            stmt.setInt(5, Integer.parseInt(WeekT.getText()));
-            stmt.setInt(6, 	GlobalData.id_pa );
-            
-            stmt.executeUpdate();
-            statSelect statSelects = new statSelect(); // Pass the ID to the Form
+                stmt.executeUpdate();
+            }
+            statSelect statSelects = new statSelect();
             statSelects.setVisible(true);
-            dispose(); 
+            dispose();
             JOptionPane.showMessageDialog(this, "Data saved successfully!");
         } catch (Exception e) {
-            e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error saving data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }

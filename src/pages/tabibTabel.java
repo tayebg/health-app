@@ -101,26 +101,10 @@ public class tabibTabel extends JFrame {
     private void loadDoctorData() {
         List<String[]> doctorList = new ArrayList<>();
 
-        // Database connection
-        Connection c = null;
-        Statement stmt = null;
-        ResultSet rs = null;
+        try (Connection c = DBConnection.getConnection();
+             Statement stmt = c.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM med")) {
 
-        try {
-            // Load MySQL JDBC driver
-            Class.forName("com.mysql.cj.jdbc.Driver");
-
-            // Establish connection to the database
-            c = DriverManager.getConnection("jdbc:mysql://localhost:3306/tabib", "Tabib", "abc123");
-
-            // Create a statement object
-            stmt = c.createStatement();
-
-            // SQL query to fetch doctor data
-            String sql = "SELECT * FROM med";
-            rs = stmt.executeQuery(sql);
-
-            // Process the result set
             while (rs.next()) {
                 int id = rs.getInt("ID_med");
                 String username = rs.getString("user_med");
@@ -129,33 +113,15 @@ public class tabibTabel extends JFrame {
                 String email = rs.getString("email_med");
                 String phone = rs.getString("phone_med");
 
-                // Add each row of doctor data to the list
                 doctorList.add(new String[]{String.valueOf(id), username, fullName, gender, email, phone});
             }
 
-            // Add each doctor from the list to the table model
             for (String[] doctor : doctorList) {
                 tableModel.addRow(doctor);
             }
 
         } catch (Exception ex) {
-            ex.printStackTrace();
             JOptionPane.showMessageDialog(null, "Database error: " + ex.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                // Close resources in finally block to ensure they are always closed
-                if (rs != null) {
-                    rs.close();
-                }
-                if (stmt != null) {
-                    stmt.close();
-                }
-                if (c != null) {
-                    c.close();
-                }
-            } catch (SQLException se) {
-                se.printStackTrace();
-            }
         }
     }
 
@@ -171,27 +137,12 @@ public class tabibTabel extends JFrame {
         // Get doctor ID from the selected row
         int doctorId = Integer.parseInt(table.getValueAt(selectedRow, 0).toString());
 
-        // Database connection
-        Connection c = null;
-        PreparedStatement stmt = null;
-
-        try {
-            // Load MySQL JDBC driver
-            Class.forName("com.mysql.cj.jdbc.Driver");
-
-            // Establish connection to the database
-            c = DriverManager.getConnection("jdbc:mysql://localhost:3306/tabib", "Tabib", "abc123");
-
-            // SQL query to delete the doctor by ID
-            String sql = "DELETE FROM med WHERE ID_med = ?";
-            stmt = c.prepareStatement(sql);
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement stmt = c.prepareStatement("DELETE FROM med WHERE ID_med = ?")) {
             stmt.setInt(1, doctorId);
 
-            // Execute the delete query
             int rowsAffected = stmt.executeUpdate();
-
             if (rowsAffected > 0) {
-                // Remove the row from the table if deletion is successful
                 tableModel.removeRow(selectedRow);
                 JOptionPane.showMessageDialog(this, "Doctor deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
@@ -199,19 +150,7 @@ public class tabibTabel extends JFrame {
             }
 
         } catch (Exception ex) {
-            ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                if (stmt != null) {
-                    stmt.close();
-                }
-                if (c != null) {
-                    c.close();
-                }
-            } catch (SQLException se) {
-                se.printStackTrace();
-            }
         }
     }
 
@@ -233,7 +172,6 @@ public class tabibTabel extends JFrame {
         String phone = table.getValueAt(selectedRow, 5).toString();
 
         // Show a dialog to modify doctor details
-        
         JTextField txtUsername = new JTextField(username);
         JTextField txtFullName = new JTextField(fullName);
         JTextField txtGender = new JTextField(gender);
@@ -256,27 +194,15 @@ public class tabibTabel extends JFrame {
         int option = JOptionPane.showConfirmDialog(this, modifyPanel, "Modify Doctor", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (option == JOptionPane.OK_OPTION) {
-            // Get updated information from text fields
             String newUsername = txtUsername.getText();
             String newFullName = txtFullName.getText();
             String newGender = txtGender.getText();
             String newEmail = txtEmail.getText();
             String newPhone = txtPhone.getText();
 
-            // Database connection
-            Connection c = null;
-            PreparedStatement stmt = null;
-
-            try {
-                // Load MySQL JDBC driver
-                Class.forName("com.mysql.cj.jdbc.Driver");
-
-                // Establish connection to the database
-                c = DriverManager.getConnection("jdbc:mysql://localhost:3306/tabib", "Tabib", "abc123");
-
-                // SQL query to update the doctor information
-                String sql = "UPDATE med SET user_med = ?, name_med = ?, gender_med = ?, email_med = ?, phone_med = ? WHERE ID_med = ?";
-                stmt = c.prepareStatement(sql);
+            String sql = "UPDATE med SET user_med = ?, name_med = ?, gender_med = ?, email_med = ?, phone_med = ? WHERE ID_med = ?";
+            try (Connection c = DBConnection.getConnection();
+                 PreparedStatement stmt = c.prepareStatement(sql)) {
                 stmt.setString(1, newUsername);
                 stmt.setString(2, newFullName);
                 stmt.setString(3, newGender);
@@ -284,11 +210,8 @@ public class tabibTabel extends JFrame {
                 stmt.setString(5, newPhone);
                 stmt.setInt(6, doctorId);
 
-                // Execute the update query
                 int rowsAffected = stmt.executeUpdate();
-
                 if (rowsAffected > 0) {
-                    // Update the table with the new data
                     tableModel.setValueAt(newUsername, selectedRow, 1);
                     tableModel.setValueAt(newFullName, selectedRow, 2);
                     tableModel.setValueAt(newGender, selectedRow, 3);
@@ -301,19 +224,7 @@ public class tabibTabel extends JFrame {
                 }
 
             } catch (Exception ex) {
-                ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
-            } finally {
-                try {
-                    if (stmt != null) {
-                        stmt.close();
-                    }
-                    if (c != null) {
-                        c.close();
-                    }
-                } catch (SQLException se) {
-                    se.printStackTrace();
-                }
             }
         }
     }

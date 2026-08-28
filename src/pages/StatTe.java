@@ -14,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
@@ -22,34 +23,28 @@ public class StatTe extends JFrame {
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
 
-    // Database credentials
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/tabib";
-    private static final String USER = "Tabib";
-    private static final String PASSWORD = "abc123";
-
     // Method to fetch the Tension data from the database
     private int[][] getTensionDataFromDatabase() {
-        int[][] Data = new int[7][7]; // Assuming 7 weeks and 7 days per week
+        int[][] Data = new int[7][7];
 
-        // SQL query to fetch the Tension data for each week and day
-        String query = "SELECT week, day, Tension FROM status WHERE ID_patient = '" + GlobalData.id_pa + "';";
+        String query = "SELECT week, day, Tension FROM status WHERE ID_patient = ?";
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD);
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, GlobalData.id_pa);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int week = rs.getInt("week");
+                    int day = rs.getInt("day");
+                    int Tension = rs.getInt("Tension");
 
-            while (rs.next()) {
-                int week = rs.getInt("week");
-                int day = rs.getInt("day");
-                int Tension = rs.getInt("Tension");  // Fetching the Tension column
-
-                // Store the Tension value in the array (default 0 if not found)
-                if (week >= 1 && week <= 7 && day >= 1 && day <= 7) {
-                    Data[week - 1][day - 1] = Tension;  // Store the Tension value
+                    if (week >= 1 && week <= 7 && day >= 1 && day <= 7) {
+                        Data[week - 1][day - 1] = Tension;
+                    }
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Notice fetching tension data: " + e.getMessage());
         }
 
         return Data;

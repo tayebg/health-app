@@ -234,7 +234,7 @@ public class signup extends JFrame {
                     System.out.println("Role: " + role);
                     System.out.println("Gender: " + gender);
                 // Database connection and insertion
-                try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/tabib", "Tabib", "abc123")) {
+                try (Connection conn = DBConnection.getConnection()) {
 
                     String sql = "";
                     if ("Medic".equals(role)) {
@@ -350,7 +350,7 @@ public class signup extends JFrame {
     }
  // Method to populate the medic combo box
     private void populateMedicComboBox() {
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/tabib", "Tabib", "abc123");
+        try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT id_med, name_med FROM med");
              ResultSet rs = stmt.executeQuery()) {
 
